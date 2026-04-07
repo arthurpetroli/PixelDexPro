@@ -28,11 +28,13 @@ export default function TeamBuilder() {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoadingPokemon, setIsLoadingPokemon] = useState(false);
+  const [pokemonPool, setPokemonPool] = useState<'all' | 'pixelmon'>('all');
 
   // Fetch pokemon list for the picker
   const { data: pokemonData, isLoading: isLoadingList } = usePokemonList({
     search: searchQuery || undefined,
     page_size: 50,
+    pokemon_pool: pokemonPool,
   });
 
   // Calculate team analysis locally
@@ -200,6 +202,34 @@ export default function TeamBuilder() {
         ))}
       </div>
 
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Pokémon Pool
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => setPokemonPool('all')}
+            className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
+              pokemonPool === 'all'
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                : 'border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700'
+            }`}
+          >
+            All Pokémon
+          </button>
+          <button
+            onClick={() => setPokemonPool('pixelmon')}
+            className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
+              pokemonPool === 'pixelmon'
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                : 'border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700'
+            }`}
+          >
+            Only Pixelmon/Cobblemon
+          </button>
+        </div>
+      </div>
+
       {/* Team Analysis */}
       {showAnalysis && teamAnalysis && (
         <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
@@ -297,6 +327,7 @@ export default function TeamBuilder() {
         <TeamSuggestions
           onSelectPokemon={handleSuggestionSelect}
           currentTeamIds={getPokemonIds()}
+          pokemonPool={pokemonPool}
           onClose={() => setShowSuggestions(false)}
         />
       )}

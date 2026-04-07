@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Zap, Shield, TrendingUp, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Sparkles, Zap, Shield, TrendingUp, ChevronDown, ChevronUp, X, Crown, Ban } from 'lucide-react';
 import { teamsApi } from '@/services/api';
 import { LoadingSpinner } from '@/components/ui/Loading';
 import type { PokemonListItem } from '@/types';
@@ -7,6 +7,7 @@ import type { PokemonListItem } from '@/types';
 interface TeamSuggestionsProps {
   onSelectPokemon: (pokemon: PokemonListItem) => void;
   currentTeamIds: number[];
+  pokemonPool: 'all' | 'pixelmon';
   onClose: () => void;
 }
 
@@ -31,6 +32,7 @@ interface SuggestionResult {
 }
 
 type Strategy = 'balanced' | 'offensive' | 'defensive' | 'stall';
+type LegendaryFilter = 'all' | 'legendaries' | 'non-legendaries';
 
 const strategies: { value: Strategy; label: string; icon: any; description: string }[] = [
   { 
@@ -59,19 +61,28 @@ const strategies: { value: Strategy; label: string; icon: any; description: stri
   },
 ];
 
-export function TeamSuggestions({ onSelectPokemon, currentTeamIds, onClose }: TeamSuggestionsProps) {
+export function TeamSuggestions({ onSelectPokemon, currentTeamIds, pokemonPool, onClose }: TeamSuggestionsProps) {
   const [mode, setMode] = useState<'complete' | 'autocomplete'>('autocomplete');
   const [strategy, setStrategy] = useState<Strategy>('balanced');
+  const [legendaryFilter, setLegendaryFilter] = useState<LegendaryFilter>('all');
   const [suggestions, setSuggestions] = useState<SuggestionResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
+  const includeLegendaries = legendaryFilter !== 'non-legendaries';
+
   const handleSuggestComplete = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await teamsApi.suggestComplete(strategy);
+      const result = await teamsApi.suggestComplete(
+        strategy,
+        undefined,
+        includeLegendaries,
+        legendaryFilter,
+        pokemonPool
+      );
       setSuggestions(result.suggestions || []);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to get suggestions');
@@ -89,7 +100,13 @@ export function TeamSuggestions({ onSelectPokemon, currentTeamIds, onClose }: Te
     setIsLoading(true);
     setError(null);
     try {
-      const result = await teamsApi.suggestAutocomplete(currentTeamIds, 'coverage');
+      const result = await teamsApi.suggestAutocomplete(
+        currentTeamIds,
+        'coverage',
+        includeLegendaries,
+        legendaryFilter,
+        pokemonPool
+      );
       setSuggestions(result.suggestions || []);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to get suggestions');
@@ -161,6 +178,48 @@ export function TeamSuggestions({ onSelectPokemon, currentTeamIds, onClose }: Te
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Creates a complete team from scratch using a strategy
                 </p>
+              </button>
+            </div>
+          </div>
+
+          {/* Legendary Filter */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Legendary Filter
+            </label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setLegendaryFilter('all')}
+                className={`flex-1 p-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 ${
+                  legendaryFilter === 'all'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700'
+                }`}
+              >
+                <Sparkles className="w-4 h-4" />
+                <span className="text-sm font-medium">All Pokemon</span>
+              </button>
+              <button
+                onClick={() => setLegendaryFilter('non-legendaries')}
+                className={`flex-1 p-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 ${
+                  legendaryFilter === 'non-legendaries'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700'
+                }`}
+              >
+                <Ban className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium">No Legendaries</span>
+              </button>
+              <button
+                onClick={() => setLegendaryFilter('legendaries')}
+                className={`flex-1 p-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 ${
+                  legendaryFilter === 'legendaries'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700'
+                }`}
+              >
+                <Crown className="w-4 h-4 text-amber-500" />
+                <span className="text-sm font-medium">Only Legendaries</span>
               </button>
             </div>
           </div>
@@ -328,6 +387,11 @@ export function TeamSuggestions({ onSelectPokemon, currentTeamIds, onClose }: Te
               <p className="text-gray-500 dark:text-gray-400">
                 Click "Get Suggestions" to receive AI-powered Pokemon recommendations
               </p>
+              {legendaryFilter !== 'all' && (
+                <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+                  If no results appear, try switching the legendary filter.
+                </p>
+              )}
             </div>
           )}
         </div>

@@ -160,6 +160,7 @@ class PokemonService:
         type_filter: Optional[str] = None,
         generation: Optional[int] = None,
         search: Optional[str] = None,
+        pokemon_pool: str = "all",
     ) -> PokemonListResponse:
         """List Pokémon with pagination and filters."""
         skip = (page - 1) * page_size
@@ -169,6 +170,7 @@ class PokemonService:
             type_filter=type_filter,
             generation=generation,
             search=search,
+            pokemon_pool=pokemon_pool,
         )
 
         pokemon_items = [self._pokemon_to_list_item(p) for p in items]

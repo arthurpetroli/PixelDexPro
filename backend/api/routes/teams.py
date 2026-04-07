@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Literal
 from db import get_db
 from services.team_service import TeamService
 from services.team_suggestion_service import TeamSuggestionService
@@ -95,6 +95,15 @@ def suggest_complete_team(
         "balanced", description="Team strategy: balanced, offensive, defensive, stall"
     ),
     generation: Optional[int] = Query(None, description="Limit to specific generation"),
+    include_legendaries: bool = Query(
+        True, description="Include legendary Pokemon in suggestions"
+    ),
+    legendary_filter: str = Query(
+        "all", description="Filter: 'all', 'legendaries', 'non-legendaries'"
+    ),
+    pokemon_pool: str = Query(
+        "all", pattern="^(all|pixelmon)$", description="Pool: all or pixelmon"
+    ),
     db: Session = Depends(get_db),
 ):
     """Get AI-generated team suggestions based on strategy."""
@@ -102,6 +111,9 @@ def suggest_complete_team(
     suggestions = service.suggest_team(
         strategy=strategy,
         generation=generation,
+        include_legendaries=include_legendaries,
+        legendary_filter=legendary_filter,
+        pokemon_pool=pokemon_pool,
     )
     return {
         "strategy": strategy,
@@ -113,6 +125,9 @@ def suggest_complete_team(
 class CompleteTeamRequest(BaseModel):
     pokemon_ids: List[int]
     prioritize: str = "coverage"  # coverage, defense, or synergy
+    include_legendaries: bool = True
+    legendary_filter: str = "all"
+    pokemon_pool: Literal["all", "pixelmon"] = "all"
 
 
 @router.post("/suggest/autocomplete")
@@ -125,6 +140,9 @@ def autocomplete_team(
     suggestions = service.complete_team(
         existing_pokemon_ids=request.pokemon_ids,
         prioritize=request.prioritize,
+        include_legendaries=request.include_legendaries,
+        legendary_filter=request.legendary_filter,
+        pokemon_pool=request.pokemon_pool,
     )
     return {
         "existing_count": len(request.pokemon_ids),

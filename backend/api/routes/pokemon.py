@@ -20,6 +20,7 @@ def list_pokemon(
     type: Optional[str] = None,
     generation: Optional[int] = None,
     search: Optional[str] = None,
+    pokemon_pool: str = Query("all", pattern="^(all|pixelmon)$"),
     db: Session = Depends(get_db),
 ):
     """List Pokémon with optional filters and pagination."""
@@ -30,6 +31,7 @@ def list_pokemon(
         type_filter=type,
         generation=generation,
         search=search,
+        pokemon_pool=pokemon_pool,
     )
 
 

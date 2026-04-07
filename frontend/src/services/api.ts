@@ -30,6 +30,7 @@ export const pokemonApi = {
     if (filters.type) params.append('type', filters.type);
     if (filters.generation) params.append('generation', filters.generation.toString());
     if (filters.search) params.append('search', filters.search);
+    if (filters.pokemon_pool) params.append('pokemon_pool', filters.pokemon_pool);
     if (filters.page) params.append('page', filters.page.toString());
     if (filters.page_size) params.append('page_size', filters.page_size.toString());
     
@@ -148,19 +149,37 @@ export const teamsApi = {
     return data;
   },
 
-  suggestComplete: async (strategy: string = 'balanced', generation?: number): Promise<any> => {
+  suggestComplete: async (
+    strategy: string = 'balanced',
+    generation?: number,
+    includeLegendaries: boolean = true,
+    legendaryFilter: string = 'all',
+    pokemonPool: 'all' | 'pixelmon' = 'all'
+  ): Promise<any> => {
     const params = new URLSearchParams();
     params.append('strategy', strategy);
     if (generation) params.append('generation', generation.toString());
+    params.append('include_legendaries', includeLegendaries.toString());
+    params.append('legendary_filter', legendaryFilter);
+    params.append('pokemon_pool', pokemonPool);
     
     const { data } = await api.get(`/teams/suggest/complete?${params}`);
     return data;
   },
 
-  suggestAutocomplete: async (pokemonIds: number[], prioritize: string = 'coverage'): Promise<any> => {
+  suggestAutocomplete: async (
+    pokemonIds: number[],
+    prioritize: string = 'coverage',
+    includeLegendaries: boolean = true,
+    legendaryFilter: string = 'all',
+    pokemonPool: 'all' | 'pixelmon' = 'all'
+  ): Promise<any> => {
     const { data } = await api.post('/teams/suggest/autocomplete', {
       pokemon_ids: pokemonIds,
       prioritize,
+      include_legendaries: includeLegendaries,
+      legendary_filter: legendaryFilter,
+      pokemon_pool: pokemonPool,
     });
     return data;
   },

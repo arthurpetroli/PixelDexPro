@@ -230,6 +230,7 @@ export interface PokemonFilters {
   type?: string;
   generation?: number;
   search?: string;
+  pokemon_pool?: 'all' | 'pixelmon';
   page?: number;
   page_size?: number;
 }

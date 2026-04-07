@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react';
-import { MapPin, Search, Filter, X } from 'lucide-react';
+import { MapPin, Search, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SearchBar } from '@/components/ui/SearchBar';
 import { LoadingSpinner } from '@/components/ui/Loading';
-import { useBiomesFromSheets, useSpawnsFromSheets } from '@/hooks/useApi';
+import { useBiomesFromSheets } from '@/hooks/useApi';
 import { cobblemonApi } from '@/services/api';
 import { useQuery } from '@tanstack/react-query';
 
@@ -32,7 +31,8 @@ const bucketColors: Record<string, string> = {
 export default function SpawnFinder() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBiome, setSelectedBiome] = useState<string>('');
-  const [showFilters, setShowFilters] = useState(false);
+  const [showAllPokemon, setShowAllPokemon] = useState(false);
+  const [expandedEntriesByPokemon, setExpandedEntriesByPokemon] = useState<Record<string, boolean>>({});
 
   // Fetch biomes from Google Sheets
   const { data: biomes, isLoading: loadingBiomes } = useBiomesFromSheets();
@@ -174,10 +174,12 @@ export default function SpawnFinder() {
       {!loadingSpawns && pokemonNames.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence>
-            {pokemonNames.slice(0, 50).map((pokemonName, index) => {
+            {(showAllPokemon ? pokemonNames : pokemonNames.slice(0, 50)).map((pokemonName, index) => {
               const spawns = groupedSpawns[pokemonName];
               const firstSpawn = spawns[0];
               const bucketColor = bucketColors[firstSpawn.bucket] || 'from-gray-500 to-gray-600';
+              const showAllEntries = expandedEntriesByPokemon[pokemonName] === true;
+              const visibleEntries = showAllEntries ? spawns : spawns.slice(0, 3);
               
               return (
                 <motion.div
@@ -205,7 +207,7 @@ export default function SpawnFinder() {
 
                   {/* Spawn Details */}
                   <div className="p-4 space-y-3">
-                    {spawns.slice(0, 3).map((spawn, idx) => (
+                    {visibleEntries.map((spawn, idx) => (
                       <div 
                         key={idx}
                         className="text-sm border-b border-gray-100 dark:border-gray-700 pb-3 last:border-0 last:pb-0"
@@ -246,9 +248,19 @@ export default function SpawnFinder() {
                       </div>
                     ))}
                     {spawns.length > 3 && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                        +{spawns.length - 3} more spawn entries
-                      </p>
+                      <button
+                        onClick={() =>
+                          setExpandedEntriesByPokemon((prev) => ({
+                            ...prev,
+                            [pokemonName]: !showAllEntries,
+                          }))
+                        }
+                        className="w-full text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-center font-medium"
+                      >
+                        {showAllEntries
+                          ? 'Show fewer spawn entries'
+                          : `+${spawns.length - 3} more spawn entries`}
+                      </button>
                     )}
                   </div>
                 </motion.div>
@@ -277,9 +289,19 @@ export default function SpawnFinder() {
 
       {/* Load More Notice */}
       {pokemonNames.length > 50 && (
-        <p className="text-center text-gray-500 dark:text-gray-400 text-sm">
-          Showing first 50 results. Use search to find specific Pokémon.
-        </p>
+        <div className="text-center space-y-2">
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
+            {showAllPokemon
+              ? `Showing all ${pokemonNames.length} Pokemon results.`
+              : 'Showing first 50 results. Use search to find specific Pokemon.'}
+          </p>
+          <button
+            onClick={() => setShowAllPokemon((prev) => !prev)}
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium"
+          >
+            {showAllPokemon ? 'Show First 50' : 'Show All Results'}
+          </button>
+        </div>
       )}
     </div>
   );

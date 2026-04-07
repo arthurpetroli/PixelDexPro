@@ -24,6 +24,7 @@ class PokemonRepository:
         type_filter: Optional[str] = None,
         generation: Optional[int] = None,
         search: Optional[str] = None,
+        pokemon_pool: str = "all",
     ) -> tuple[List[Pokemon], int]:
         query = self.db.query(Pokemon).filter(Pokemon.is_default == True)
 
@@ -39,6 +40,9 @@ class PokemonRepository:
                 .join(Type)
                 .filter(Type.name == type_filter.lower())
             )
+
+        if pokemon_pool == "pixelmon":
+            query = query.filter(Pokemon.cobblemon_spawns.any())
 
         total = query.count()
         items = query.offset(skip).limit(limit).all()
